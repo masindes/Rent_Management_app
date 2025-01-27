@@ -72,6 +72,14 @@ def update_tenant(id):
     db.session.commit()
     return jsonify({'message': 'Tenant updated successfully'})
 
+# Delete Tenant
+@app.route('/tenant/<int:id>', methods=['DELETE'])
+def delete_tenant(id):
+    tenant = Tenant.query.get_or_404(id)
+    db.session.delete(tenant)
+    db.session.commit()
+    return jsonify({'message': 'Tenant deleted successfully'})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
