@@ -97,6 +97,22 @@ def create_payment():
     db.session.commit()
     return jsonify({'message': 'Payment created successfully'}), 201
 
+# Get All Payments
+@app.route('/payment', methods=['GET'])
+def get_payments():
+    payments = Payment.query.all()
+    result = []
+    for payment in payments:
+        result.append({
+            'id': payment.id,
+            'payment_type': payment.payment_type,
+            'status': payment.status,
+            'amount': payment.amount,
+            'payment_date': payment.payment_date.strftime('%Y-%m-%d'),
+            'tenant_id': payment.tenant_id
+        })
+    return jsonify(result)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
