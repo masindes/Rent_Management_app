@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
+from datetime import datetime
 from models import Property, Tenant, Payment
 
 
@@ -79,6 +80,22 @@ def delete_tenant(id):
     db.session.delete(tenant)
     db.session.commit()
     return jsonify({'message': 'Tenant deleted successfully'})
+
+
+# Create Payment
+@app.route('/payment', methods=['POST'])
+def create_payment():
+    data = request.get_json()
+    new_payment = Payment(
+        payment_type=data['payment_type'],
+        status=data['status'],
+        amount=data['amount'],
+        payment_date=datetime.strptime(data['payment_date'], '%Y-%m-%d'),
+        tenant_id=data['tenant_id']
+    )
+    db.session.add(new_payment)
+    db.session.commit()
+    return jsonify({'message': 'Payment created successfully'}), 201
 
 
 if __name__ == '__main__':
