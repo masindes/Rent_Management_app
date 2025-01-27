@@ -12,6 +12,9 @@ app.config['SECRET_KEY'] = 'your-secret-key'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 cors = CORS(app)
-serializer = Serializer()
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 
