@@ -30,6 +30,21 @@ def create_property():
     db.session.commit()
     return jsonify({'message': 'Property created successfully'}), 201
 
+# Get All Properties
+@app.route('/property', methods=['GET'])
+def get_properties():
+    properties = Property.query.all()
+    result = []
+    for property in properties:
+        result.append({
+            'id': property.id,
+            'name': property.name,
+            'address': property.address,
+            'bedrooms': property.bedrooms,
+            'rent': property.rent
+        })
+    return jsonify(result)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
