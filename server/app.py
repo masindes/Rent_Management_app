@@ -2,17 +2,47 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
-from models import Property, Tenant, Payment
 from datetime import datetime
 
+# Initialize Flask app
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///rent_management.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///rent_management.db'  # Ensure correct path
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key'
 
+# Initialize extensions
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 cors = CORS(app)
+
+# Define models
+class Property(db.Model):
+    __tablename__ = 'properties'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    address = db.Column(db.String(200), nullable=False)
+    bedrooms = db.Column(db.Integer, nullable=False)
+    rent = db.Column(db.Float, nullable=False)
+    tenants = db.relationship('Tenant', backref='property', lazy=True)
+
+class Tenant(db.Model):
+    __tablename__ = 'tenants'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(100), nullable=False)
+    unit_id = db.Column(db.Integer, nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    property_id = db.Column(db.Integer, db.ForeignKey('properties.id'), nullable=False)
+    payments = db.relationship('Payment', backref='tenant', lazy=True)
+
+class Payment(db.Model):
+    __tablename__ = 'payments'
+    id = db.Column(db.Integer, primary_key=True)
+    payment_type = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(100), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    payment_date = db.Column(db.DateTime, nullable=False)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False)
 
 
 # Create Property
@@ -34,15 +64,16 @@ def create_property():
 @app.route('/property', methods=['GET'])
 def get_properties():
     properties = Property.query.all()
-    result = []
-    for property in properties:
-        result.append({
+    result = [
+        {
             'id': property.id,
             'name': property.name,
             'address': property.address,
             'bedrooms': property.bedrooms,
             'rent': property.rent
-        })
+        }
+        for property in properties
+    ]
     return jsonify(result)
 
 
@@ -103,16 +134,17 @@ def create_tenant():
 @app.route('/tenant', methods=['GET'])
 def get_tenants():
     tenants = Tenant.query.all()
-    result = []
-    for tenant in tenants:
-        result.append({
+    result = [
+        {
             'id': tenant.id,
             'name': tenant.name,
             'phone': tenant.phone,
             'unit_id': tenant.unit_id,
             'email': tenant.email,
             'property_id': tenant.property_id
-        })
+        }
+        for tenant in tenants
+    ]
     return jsonify(result)
 
 
@@ -175,16 +207,17 @@ def create_payment():
 @app.route('/payment', methods=['GET'])
 def get_payments():
     payments = Payment.query.all()
-    result = []
-    for payment in payments:
-        result.append({
+    result = [
+        {
             'id': payment.id,
             'payment_type': payment.payment_type,
             'status': payment.status,
             'amount': payment.amount,
             'payment_date': payment.payment_date.strftime('%Y-%m-%d'),
             'tenant_id': payment.tenant_id
-        })
+        }
+        for payment in payments
+    ]
     return jsonify(result)
 
 
