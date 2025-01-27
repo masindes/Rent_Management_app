@@ -57,6 +57,21 @@ def get_property(id):
         'rent': property.rent
     })
 
+# Update Tenant
+@app.route('/tenant/<int:id>', methods=['PUT'])
+def update_tenant(id):
+    tenant = Tenant.query.get_or_404(id)
+    data = request.get_json()
+
+    tenant.name = data['name']
+    tenant.phone = data['phone']
+    tenant.unit_id = data['unit_id']
+    tenant.email = data['email']
+    tenant.property_id = data['property_id']
+
+    db.session.commit()
+    return jsonify({'message': 'Tenant updated successfully'})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
