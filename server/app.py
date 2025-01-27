@@ -45,6 +45,18 @@ def get_properties():
         })
     return jsonify(result)
 
+# Get Single Property by ID
+@app.route('/property/<int:id>', methods=['GET'])
+def get_property(id):
+    property = Property.query.get_or_404(id)
+    return jsonify({
+        'id': property.id,
+        'name': property.name,
+        'address': property.address,
+        'bedrooms': property.bedrooms,
+        'rent': property.rent
+    })
+
 
 if __name__ == '__main__':
     app.run(debug=True)
