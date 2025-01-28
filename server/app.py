@@ -6,234 +6,176 @@ from models import db, Property, Tenant, Payment
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///rent_management.db' 
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///rent_management.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key'
 
 # Initialize extensions
 db.init_app(app)
 migrate = Migrate(app, db)
-cors = CORS(app)
+CORS(app)
 
 @app.route("/")
-def home ():
+def home():
     return "<h1>Rent Management Application</h1>"
 
+# Helper function to handle not found errors
+def handle_not_found(item, id):
+    if not item:
+        return jsonify({'error': f'Item with ID {id} not found'}), 404
+    return None
 
-# Create Property
+# Routes for Properties
 @app.route('/property', methods=['POST'])
 def create_property():
     data = request.get_json()
-    new_property = Property(
-        name=data['name'],
-        address=data['address'],
-        bedrooms=data['bedrooms'],
-        rent=data['rent']
-    )
+    if not data:
+        return jsonify({'error': 'Invalid JSON data'}), 400
+
+    new_property = Property(**data)
     db.session.add(new_property)
     db.session.commit()
     return jsonify({'message': 'Property created successfully'}), 201
 
-
-# Get All Properties
 @app.route('/property', methods=['GET'])
 def get_properties():
     properties = Property.query.all()
-    result = [
-        {
-            'id': property.id,
-            'name': property.name,
-            'address': property.address,
-            'bedrooms': property.bedrooms,
-            'rent': property.rent
-        }
-        for property in properties
-    ]
-    return jsonify(result)
+    return jsonify([p.to_dict() for p in properties])
 
-
-# Get Single Property by ID
 @app.route('/property/<int:id>', methods=['GET'])
 def get_property(id):
-    property = Property.query.get_or_404(id)
-    return jsonify({
-        'id': property.id,
-        'name': property.name,
-        'address': property.address,
-        'bedrooms': property.bedrooms,
-        'rent': property.rent
-    })
+    property = Property.query.get(id)
+    error = handle_not_found(property, id)
+    if error:
+        return error
+    return jsonify(property.to_dict())
 
 
-# Update Property
-@app.route('/property/<int:id>', methods=['PUT'])
-def update_property(id):
-    property = Property.query.get_or_404(id)
+@app.route('/property/<int:id>', methods=['PATCH'])
+def patch_property(id):
+    property = Property.query.get(id)
+    error = handle_not_found(property, id)
+    if error:
+        return error
+
     data = request.get_json()
-
-    property.name = data['name']
-    property.address = data['address']
-    property.bedrooms = data['bedrooms']
-    property.rent = data['rent']
-
+    for key, value in data.items():
+        setattr(property, key, value)
     db.session.commit()
     return jsonify({'message': 'Property updated successfully'})
 
 
-# Delete Property
 @app.route('/property/<int:id>', methods=['DELETE'])
 def delete_property(id):
-    property = Property.query.get_or_404(id)
+    property = Property.query.get(id)
+    error = handle_not_found(property, id)
+    if error:
+        return error
+
     db.session.delete(property)
     db.session.commit()
     return jsonify({'message': 'Property deleted successfully'})
 
-
-# Create Tenant
+# Routes for Tenants
 @app.route('/tenant', methods=['POST'])
 def create_tenant():
     data = request.get_json()
-    new_tenant = Tenant(
-        name=data['name'],
-        phone=data['phone'],
-        unit_id=data['unit_id'],
-        email=data['email'],
-        property_id=data['property_id']
-    )
+    if not data:
+        return jsonify({'error': 'Invalid JSON data'}), 400
+
+    new_tenant = Tenant(**data)
     db.session.add(new_tenant)
     db.session.commit()
     return jsonify({'message': 'Tenant created successfully'}), 201
 
-
-# Get All Tenants
 @app.route('/tenant', methods=['GET'])
 def get_tenants():
     tenants = Tenant.query.all()
-    result = [
-        {
-            'id': tenant.id,
-            'name': tenant.name,
-            'phone': tenant.phone,
-            'unit_id': tenant.unit_id,
-            'email': tenant.email,
-            'property_id': tenant.property_id
-        }
-        for tenant in tenants
-    ]
-    return jsonify(result)
+    return jsonify([t.to_dict() for t in tenants])
 
-
-# Get Single Tenant by ID
 @app.route('/tenant/<int:id>', methods=['GET'])
 def get_tenant(id):
-    tenant = Tenant.query.get_or_404(id)
-    return jsonify({
-        'id': tenant.id,
-        'name': tenant.name,
-        'phone': tenant.phone,
-        'unit_id': tenant.unit_id,
-        'email': tenant.email,
-        'property_id': tenant.property_id
-    })
+    tenant = Tenant.query.get(id)
+    error = handle_not_found(tenant, id)
+    if error:
+        return error
+    return jsonify(tenant.to_dict())
 
+@app.route('/tenant/<int:id>', methods=['PATCH'])
+def patch_tenant(id):
+    tenant = Tenant.query.get(id)
+    error = handle_not_found(tenant, id)
+    if error:
+        return error
 
-# Update Tenant
-@app.route('/tenant/<int:id>', methods=['PUT'])
-def update_tenant(id):
-    tenant = Tenant.query.get_or_404(id)
     data = request.get_json()
-
-    tenant.name = data['name']
-    tenant.phone = data['phone']
-    tenant.unit_id = data['unit_id']
-    tenant.email = data['email']
-    tenant.property_id = data['property_id']
-
+    for key, value in data.items():
+        setattr(tenant, key, value)
     db.session.commit()
     return jsonify({'message': 'Tenant updated successfully'})
 
-
-# Delete Tenant
 @app.route('/tenant/<int:id>', methods=['DELETE'])
 def delete_tenant(id):
-    tenant = Tenant.query.get_or_404(id)
+    tenant = Tenant.query.get(id)
+    error = handle_not_found(tenant, id)
+    if error:
+        return error
+
     db.session.delete(tenant)
     db.session.commit()
     return jsonify({'message': 'Tenant deleted successfully'})
 
-
-# Create Payment
+# Routes for Payments
 @app.route('/payment', methods=['POST'])
 def create_payment():
     data = request.get_json()
-    new_payment = Payment(
-        payment_type=data['payment_type'],
-        status=data['status'],
-        amount=data['amount'],
-        payment_date=datetime.strptime(data['payment_date'], '%Y-%m-%d'),
-        tenant_id=data['tenant_id']
-    )
+    if not data:
+        return jsonify({'error': 'Invalid JSON data'}), 400
+
+    data['payment_date'] = datetime.strptime(data['payment_date'], '%Y-%m-%d')
+    new_payment = Payment(**data)
     db.session.add(new_payment)
     db.session.commit()
     return jsonify({'message': 'Payment created successfully'}), 201
 
-
-# Get All Payments
 @app.route('/payment', methods=['GET'])
 def get_payments():
     payments = Payment.query.all()
-    result = [
-        {
-            'id': payment.id,
-            'payment_type': payment.payment_type,
-            'status': payment.status,
-            'amount': payment.amount,
-            'payment_date': payment.payment_date.strftime('%Y-%m-%d'),
-            'tenant_id': payment.tenant_id
-        }
-        for payment in payments
-    ]
-    return jsonify(result)
+    return jsonify([p.to_dict() for p in payments])
 
-
-# Get Single Payment by ID
 @app.route('/payment/<int:id>', methods=['GET'])
 def get_payment(id):
-    payment = Payment.query.get_or_404(id)
-    return jsonify({
-        'id': payment.id,
-        'payment_type': payment.payment_type,
-        'status': payment.status,
-        'amount': payment.amount,
-        'payment_date': payment.payment_date.strftime('%Y-%m-%d'),
-        'tenant_id': payment.tenant_id
-    })
+    payment = Payment.query.get(id)
+    error = handle_not_found(payment, id)
+    if error:
+        return error
+    return jsonify(payment.to_dict())
 
+@app.route('/payment/<int:id>', methods=['PATCH'])
+def patch_payment(id):
+    payment = Payment.query.get(id)
+    error = handle_not_found(payment, id)
+    if error:
+        return error
 
-# Update Payment
-@app.route('/payment/<int:id>', methods=['PUT'])
-def update_payment(id):
-    payment = Payment.query.get_or_404(id)
     data = request.get_json()
-
-    payment.payment_type = data['payment_type']
-    payment.status = data['status']
-    payment.amount = data['amount']
-    payment.payment_date = datetime.strptime(data['payment_date'], '%Y-%m-%d')
-    payment.tenant_id = data['tenant_id']
-
+    if 'payment_date' in data:
+        data['payment_date'] = datetime.strptime(data['payment_date'], '%Y-%m-%d')
+    for key, value in data.items():
+        setattr(payment, key, value)
     db.session.commit()
     return jsonify({'message': 'Payment updated successfully'})
 
-
-# Delete Payment
 @app.route('/payment/<int:id>', methods=['DELETE'])
 def delete_payment(id):
-    payment = Payment.query.get_or_404(id)
+    payment = Payment.query.get(id)
+    error = handle_not_found(payment, id)
+    if error:
+        return error
+
     db.session.delete(payment)
     db.session.commit()
     return jsonify({'message': 'Payment deleted successfully'})
-
 
 if __name__ == '__main__':
     app.run(debug=True)
