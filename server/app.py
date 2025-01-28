@@ -15,7 +15,9 @@ db.init_app(app)
 migrate = Migrate(app, db)
 cors = CORS(app)
 
-
+@app.route("/")
+def home ():
+    return "<h1>Rent Management Application</h1>"
 
 
 # Create Property
