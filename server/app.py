@@ -9,7 +9,7 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://rent_management_app_user:7BjZevxGsQkFasEeL5TW2vyiEpnlDJiB@dpg-cuf0oa56l47c73f8l3j0-a.oregon-postgres.render.com/rent_management_app"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key'
 
