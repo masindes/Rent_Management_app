@@ -13,7 +13,7 @@ app.config['SECRET_KEY'] = 'your-secret-key'
 # Initialize extensions
 db.init_app(app)
 migrate = Migrate(app, db)
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "methods": ["GET", "POST", "PATCH", "DELETE"]}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "methods": ["GET", "POST", "PUT", "PATCH", "DELETE"]}})
 
 @app.route("/")
 def home():
@@ -54,8 +54,8 @@ def get_property(id):
         return error
     return jsonify(property.to_dict())
 
-@app.route('/property/<int:id>', methods=['PATCH'])
-def patch_property(id):
+@app.route('/property/<int:id>', methods=['PUT', 'PATCH'])  # Allow both PUT and PATCH
+def update_property(id):
     property = Property.query.get(id)
     error = handle_not_found(property, id)
     if error:
