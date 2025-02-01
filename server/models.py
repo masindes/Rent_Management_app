@@ -9,7 +9,7 @@ class Property(db.Model):
     address = db.Column(db.String(200), nullable=False)
     bedrooms = db.Column(db.Integer, nullable=False)
     rent = db.Column(db.Float, nullable=False)
-    tenants = db.relationship('Tenant', backref='property', lazy=True)
+    tenants = db.relationship('Tenant', backref='property', lazy=True, cascade='all, delete-orphan')
 
     def to_dict(self):
         return {
@@ -28,7 +28,7 @@ class Tenant(db.Model):
     unit_id = db.Column(db.Integer, nullable=False)
     email = db.Column(db.String(100), nullable=False)
     property_id = db.Column(db.Integer, db.ForeignKey('properties.id'), nullable=False)
-    payments = db.relationship('Payment', backref='tenant', lazy=True)
+    payments = db.relationship('Payment', backref='tenant', lazy=True, cascade='all, delete-orphan')
 
     def to_dict(self):
         return {

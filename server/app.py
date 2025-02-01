@@ -13,7 +13,7 @@ app.config['SECRET_KEY'] = 'your-secret-key'
 # Initialize extensions
 db.init_app(app)
 migrate = Migrate(app, db)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "methods": ["GET", "POST", "PATCH", "DELETE"]}})
 
 @app.route("/")
 def home():
@@ -32,10 +32,14 @@ def create_property():
     if not data:
         return jsonify({'error': 'Invalid JSON data'}), 400
 
+    required_fields = ['name', 'address', 'bedrooms', 'rent']
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields'}), 400
+
     new_property = Property(**data)
     db.session.add(new_property)
     db.session.commit()
-    return jsonify({'message': 'Property created successfully'}), 201
+    return jsonify({'message': 'Property created successfully', 'property': new_property.to_dict()}), 201
 
 @app.route('/property', methods=['GET'])
 def get_properties():
@@ -50,7 +54,6 @@ def get_property(id):
         return error
     return jsonify(property.to_dict())
 
-
 @app.route('/property/<int:id>', methods=['PATCH'])
 def patch_property(id):
     property = Property.query.get(id)
@@ -59,11 +62,14 @@ def patch_property(id):
         return error
 
     data = request.get_json()
-    for key, value in data.items():
-        setattr(property, key, value)
-    db.session.commit()
-    return jsonify({'message': 'Property updated successfully'})
+    if not data:
+        return jsonify({'error': 'Invalid JSON data'}), 400
 
+    for key, value in data.items():
+        if hasattr(property, key):
+            setattr(property, key, value)
+    db.session.commit()
+    return jsonify({'message': 'Property updated successfully', 'property': property.to_dict()})
 
 @app.route('/property/<int:id>', methods=['DELETE'])
 def delete_property(id):
@@ -83,10 +89,14 @@ def create_tenant():
     if not data:
         return jsonify({'error': 'Invalid JSON data'}), 400
 
+    required_fields = ['name', 'phone', 'email', 'unit_id', 'property_id']
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields'}), 400
+
     new_tenant = Tenant(**data)
     db.session.add(new_tenant)
     db.session.commit()
-    return jsonify({'message': 'Tenant created successfully'}), 201
+    return jsonify({'message': 'Tenant created successfully', 'tenant': new_tenant.to_dict()}), 201
 
 @app.route('/tenant', methods=['GET'])
 def get_tenants():
@@ -109,10 +119,14 @@ def patch_tenant(id):
         return error
 
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Invalid JSON data'}), 400
+
     for key, value in data.items():
-        setattr(tenant, key, value)
+        if hasattr(tenant, key):
+            setattr(tenant, key, value)
     db.session.commit()
-    return jsonify({'message': 'Tenant updated successfully'})
+    return jsonify({'message': 'Tenant updated successfully', 'tenant': tenant.to_dict()})
 
 @app.route('/tenant/<int:id>', methods=['DELETE'])
 def delete_tenant(id):
@@ -132,11 +146,19 @@ def create_payment():
     if not data:
         return jsonify({'error': 'Invalid JSON data'}), 400
 
-    data['payment_date'] = datetime.strptime(data['payment_date'], '%Y-%m-%d')
+    required_fields = ['payment_type', 'status', 'amount', 'payment_date', 'tenant_id']
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    try:
+        data['payment_date'] = datetime.strptime(data['payment_date'], '%Y-%m-%d')
+    except ValueError:
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+
     new_payment = Payment(**data)
     db.session.add(new_payment)
     db.session.commit()
-    return jsonify({'message': 'Payment created successfully'}), 201
+    return jsonify({'message': 'Payment created successfully', 'payment': new_payment.to_dict()}), 201
 
 @app.route('/payment', methods=['GET'])
 def get_payments():
@@ -159,12 +181,20 @@ def patch_payment(id):
         return error
 
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Invalid JSON data'}), 400
+
     if 'payment_date' in data:
-        data['payment_date'] = datetime.strptime(data['payment_date'], '%Y-%m-%d')
+        try:
+            data['payment_date'] = datetime.strptime(data['payment_date'], '%Y-%m-%d')
+        except ValueError:
+            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+
     for key, value in data.items():
-        setattr(payment, key, value)
+        if hasattr(payment, key):
+            setattr(payment, key, value)
     db.session.commit()
-    return jsonify({'message': 'Payment updated successfully'})
+    return jsonify({'message': 'Payment updated successfully', 'payment': payment.to_dict()})
 
 @app.route('/payment/<int:id>', methods=['DELETE'])
 def delete_payment(id):
