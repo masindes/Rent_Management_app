@@ -20,12 +20,13 @@ migrate = Migrate(app, db)
 # Enable CORS for all routes
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:3000", "https://stalwart-cascaron-47c3b6.netlify.app"], 
+        "origins": "*", 
         "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
     }
 })
+
 
 
 
