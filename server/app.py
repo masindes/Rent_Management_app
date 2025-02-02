@@ -16,7 +16,17 @@ app.config['SECRET_KEY'] = 'your-secret-key'
 # Initialize extensions
 db.init_app(app)
 migrate = Migrate(app, db)
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "methods": ["GET", "POST", "PUT", "PATCH", "DELETE"]}})
+
+# Enable CORS for all routes
+CORS(app, resources={
+    r"/*": {
+        "origins": "http://localhost:3000",
+        "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
+
 
 @app.route("/")
 def home():
